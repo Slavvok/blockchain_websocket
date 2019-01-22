@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 import numpy as np
 from collections import deque
-
+import sys, getopt
 
 ws = create_connection("wss://ws.blockchain.info/inv")
 ws.send("""{"op":"blocks_sub"}""")
@@ -42,19 +42,23 @@ def fork_watcher(hard_fork_time):
                 diff = abs(datetime.fromtimestamp(hard_fork_time) - \
                    datetime.fromtimestamp(median))
                 print("Timedelta: %s" % diff)
+                return False
         else:
             print("Len %d" % len(t))
-        tx = ws.recv()
-        data = json.loads(tx)
-        print(data['x']['hash'])
-        print(data['x']['time'])
-        latest_blocks_time.pop()
-        latest_blocks_time.appendleft(data['x']['time'])
+                tx = ws.recv()
+                data = json.loads(tx)
+                print(data['x']['hash'])
+                print(data['x']['time'])
+                latest_blocks_time.pop()
+                latest_blocks_time.appendleft(data['x']['time'])
 
 
 def main():
-    hard_fork_time = 1548131690
-    fork_watcher(hard_fork_time)
+    options, arg = getopt.getopt(sys.argv[1:], 'p:', 'params=')
+    for opt, arg in options:
+        if opt in ('-p', '--params'):
+            fork_watcher(int(arg))
+    ws.close()
 
 
 if __name__== "__main__":
